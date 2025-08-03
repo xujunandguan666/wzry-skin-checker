@@ -321,7 +321,7 @@
     <script>
         // 配置
         const CONFIG = {
-            API_ENDPOINT: 'http://yd.sycwy.cn/api/json/yd_h5getheroskinlist.php',
+            API_ENDPOINT: 'https://yd.sycwy.cn/api/json/yd_h5getheroskinlist.php',
             DEMO_MODE: false,
             API_KEY: 'JcpFBxhBpzauO2KBRHfNOOFYkauHj9Dr'
         };
@@ -404,14 +404,15 @@
             
             params.sign = generateSign(params, CONFIG.API_KEY);
             
+            // 尝试HTTPS版本
             try {
                 const response = await fetch(CONFIG.API_ENDPOINT, {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/x-www-form-urlencoded',
                         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
-                        'Referer': 'http://xh.sycwy.cn/',
-                        'Origin': 'http://xh.sycwy.cn'
+                        'Referer': 'https://xh.sycwy.cn/',
+                        'Origin': 'https://xh.sycwy.cn'
                     },
                     body: new URLSearchParams(params).toString()
                 });
@@ -424,15 +425,44 @@
                 console.log('🌐 原始API响应:', result);
                 
                 if (result.code === 200 && result.data) {
-                    // 返回未经修改的真实API数据
                     console.log('✅ API数据获取成功，返回真实数据');
                     return result.data;
                 } else {
                     throw new Error(result.msg || '查询失败');
                 }
             } catch (error) {
-                console.error('API调用失败:', error);
-                throw error;
+                console.error('HTTPS API调用失败，尝试HTTP版本:', error);
+                
+                // 降级到HTTP版本
+                try {
+                    const httpResponse = await fetch('http://yd.sycwy.cn/api/json/yd_h5getheroskinlist.php', {
+                        method: 'POST',
+                        headers: {
+                            'Content-Type': 'application/x-www-form-urlencoded',
+                            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                            'Referer': 'http://xh.sycwy.cn/',
+                            'Origin': 'http://xh.sycwy.cn'
+                        },
+                        body: new URLSearchParams(params).toString()
+                    });
+                    
+                    if (!httpResponse.ok) {
+                        throw new Error(`HTTP error! status: ${httpResponse.status}`);
+                    }
+                    
+                    const httpResult = await httpResponse.json();
+                    console.log('🌐 HTTP API响应:', httpResult);
+                    
+                    if (httpResult.code === 200 && httpResult.data) {
+                        console.log('✅ HTTP API数据获取成功');
+                        return httpResult.data;
+                    } else {
+                        throw new Error(httpResult.msg || '查询失败');
+                    }
+                } catch (httpError) {
+                    console.error('HTTP API也调用失败:', httpError);
+                    throw new Error('网络请求失败，请检查网络连接或稍后重试');
+                }
             }
         }
 
