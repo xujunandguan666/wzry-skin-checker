@@ -1,0 +1,587 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>王者荣耀皮肤查询器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 1200px;
+            overflow: hidden;
+        }
+        
+        .header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            padding: 30px 40px;
+            text-align: center;
+        }
+        
+        .header h1 {
+            font-size: 2.5em;
+            margin-bottom: 10px;
+            font-weight: 600;
+        }
+        
+        .header p {
+            font-size: 1.1em;
+            opacity: 0.9;
+        }
+        
+        .search-section {
+            padding: 40px;
+            background: #f8f9fa;
+        }
+        
+        .search-box {
+            display: flex;
+            gap: 15px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+        
+        .search-input {
+            flex: 1;
+            padding: 15px 20px;
+            border: 2px solid #e0e0e0;
+            border-radius: 10px;
+            font-size: 16px;
+            transition: all 0.3s ease;
+        }
+        
+        .search-input:focus {
+            outline: none;
+            border-color: #667eea;
+            box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+        
+        .search-btn, .copy-btn {
+            padding: 15px 30px;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            white-space: nowrap;
+        }
+        
+        .search-btn:hover, .copy-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(102, 126, 234, 0.3);
+        }
+        
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+            transform: none;
+        }
+        
+        .loading {
+            display: none;
+            text-align: center;
+            padding: 20px;
+            color: #666;
+        }
+        
+        .loading.show {
+            display: block;
+        }
+        
+        .results {
+            padding: 40px;
+            display: none;
+        }
+        
+        .results.show {
+            display: block;
+        }
+        
+        .player-info {
+            text-align: center;
+            margin-bottom: 40px;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .player-info h2 {
+            color: #333;
+            font-size: 1.8em;
+            margin-bottom: 20px;
+        }
+        
+        .player-info p {
+            color: #666;
+            font-size: 1.1em;
+            line-height: 1.8;
+        }
+        
+        .skin-category {
+            margin-bottom: 30px;
+            border-radius: 15px;
+            overflow: hidden;
+            box-shadow: 0 5px 20px rgba(0, 0, 0, 0.08);
+        }
+        
+        .category-header {
+            padding: 20px 30px;
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .category-title {
+            font-size: 1.4em;
+            font-weight: 600;
+        }
+        
+        .category-count {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 5px 15px;
+            border-radius: 20px;
+            font-size: 1.1em;
+        }
+        
+        .skin-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+            gap: 15px;
+            padding: 20px;
+            background: #f8f9fa;
+        }
+        
+        .skin-item {
+            background: white;
+            padding: 15px;
+            border-radius: 10px;
+            text-align: center;
+            transition: all 0.3s ease;
+            border: 2px solid transparent;
+        }
+        
+        .skin-item:hover {
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+            border-color: #667eea;
+        }
+        
+        .skin-name {
+            font-weight: 600;
+            color: #333;
+            font-size: 1.05em;
+        }
+        
+        .empty-category {
+            padding: 40px;
+            text-align: center;
+            color: #999;
+            background: #f8f9fa;
+        }
+        
+        /* 分类颜色 */
+        .rongyao .category-header {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+        
+        .zhenpinwushuang .category-header {
+            background: linear-gradient(135deg, #fa709a 0%, #fee140 100%);
+        }
+        
+        .wushuang .category-header {
+            background: linear-gradient(135deg, #30cfd0 0%, #330867 100%);
+        }
+        
+        .zhenpin .category-header {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+        
+        .chuanshuo .category-header {
+            background: linear-gradient(135deg, #f6d365 0%, #fda085 100%);
+        }
+
+        .remen .category-header {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        
+        .xianding .category-header {
+            background: linear-gradient(135deg, #ff9a8b 0%, #fecfef 100%);
+        }
+        
+        .neice .category-header {
+            background: linear-gradient(135deg, #a8edea 0%, #fed6e3 100%);
+        }
+        
+        .xingyuan .category-header {
+            background: linear-gradient(135deg, #fbc2eb 0%, #a6c1ee 100%);
+        }
+        
+        .copy-success {
+            position: fixed;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+            background: #4caf50;
+            color: white;
+            padding: 20px 40px;
+            border-radius: 10px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.2);
+            font-size: 1.2em;
+            font-weight: 600;
+            opacity: 0;
+            pointer-events: none;
+            transition: opacity 0.3s ease;
+        }
+        
+        .copy-success.show {
+            opacity: 1;
+        }
+        
+        .copy-text {
+            background: rgba(255, 255, 255, 0.2);
+            padding: 2px 8px;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .copy-text:hover {
+            background: rgba(255, 255, 255, 0.3);
+            transform: translateY(-1px);
+        }
+        
+        @media (max-width: 768px) {
+            .search-box {
+                flex-direction: column;
+            }
+            
+            .skin-grid {
+                grid-template-columns: repeat(auto-fill, minmax(150px, 1fr));
+            }
+            
+            .header h1 {
+                font-size: 2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h1>👑 王者荣耀皮肤查询器</h1>
+            <p>出租账号认准小安网游，微信:<span class="copy-text" onclick="copyToClipboard('and1230and')" title="点击复制微信号">and1230and</span> QQ:<span class="copy-text" onclick="copyToClipboard('1299841161')" title="点击复制QQ号">1299841161</span></p>
+        </div>
+        
+        <div class="search-section">
+            <div class="search-box">
+                <input type="text" class="search-input" id="playerIdInput" placeholder="请输入王者营地ID" />
+                <button class="search-btn" id="searchBtn">查询皮肤</button>
+                <button class="copy-btn" id="copyBtn" style="display: none;">一键复制</button>
+            </div>
+            <div class="loading" id="loading">
+                <p>正在查询中，请稍候...</p>
+            </div>
+        </div>
+        
+        <div class="results" id="results">
+            <div class="player-info" id="playerInfo">
+                <h2>查询结果</h2>
+                <p id="playerIdDisplay"></p>
+            </div>
+            <div class="skin-categories" id="skinCategories"></div>
+        </div>
+    </div>
+    
+    <div class="copy-success" id="copySuccess">复制成功！</div>
+
+    <script>
+        // 配置
+        const CONFIG = {
+            API_ENDPOINT: 'http://yd.sycwy.cn/api/json/yd_h5getheroskinlist.php',
+            DEMO_MODE: false,
+            API_KEY: 'JcpFBxhBpzauO2KBRHfNOOFYkauHj9Dr'
+        };
+
+        // 定义皮肤字段
+        const SKIN_FIELDS = ['remen', 'xianding', 'wushuang', 'zhenpin', 'zhenpinwushuang', 'rongyao', 'xingyuan'];
+
+        // 皮肤分类配置
+        const SKIN_CATEGORIES = [
+            { key: 'zhenpinwushuang', title: '珍品无双皮肤', className: 'zhenpinwushuang' },
+            { key: 'wushuang', title: '无双限定皮肤', className: 'wushuang' },
+            { key: 'zhenpin', title: '珍品皮肤', className: 'zhenpin' },
+            { key: 'rongyao', title: '荣耀典藏皮肤', className: 'rongyao' },
+            { key: 'remen', title: '热门皮肤', className: 'remen' },
+            { key: 'xianding', title: '普通限定皮肤', className: 'xianding' },
+            { key: 'xingyuan', title: '星元皮肤', className: 'xingyuan' }
+        ];
+
+        // 全局变量存储当前数据
+        let currentPlayerData = null;
+
+        // 生成签名
+        function generateSign(params, apiKey) {
+            const queryString = `id=${params.id}&key=${apiKey}`;
+            return btoa(queryString);
+        }
+
+        // 生成皮肤分类
+        function generateSkinCategories(data) {
+            const categoriesContainer = document.getElementById('skinCategories');
+            categoriesContainer.innerHTML = '';
+            
+            SKIN_CATEGORIES.forEach(category => {
+                let skins = [];
+                
+                // 处理API返回的数据
+                if (data[category.key] && typeof data[category.key] === 'string') {
+                    skins = data[category.key].split(',').map(s => s.trim()).filter(Boolean);
+                }
+                
+                // 只有在分类下有皮肤时才显示
+                if (skins.length > 0) {
+                    const categoryDiv = document.createElement('div');
+                    categoryDiv.className = `skin-category ${category.className}`;
+                    
+                    const headerDiv = document.createElement('div');
+                    headerDiv.className = 'category-header';
+                    headerDiv.innerHTML = `
+                        <div class="category-title">${category.title} (${skins.length})</div>
+                    `;
+                    categoryDiv.appendChild(headerDiv);
+                    
+                    const gridDiv = document.createElement('div');
+                    gridDiv.className = 'skin-grid';
+                    
+                    skins.forEach(skinName => {
+                        const skinItem = document.createElement('div');
+                        skinItem.className = 'skin-item';
+                        skinItem.innerHTML = `<div class="skin-name">${skinName}</div>`;
+                        gridDiv.appendChild(skinItem);
+                    });
+                    
+                    categoryDiv.appendChild(gridDiv);
+                    categoriesContainer.appendChild(categoryDiv);
+                }
+            });
+
+            // 保存当前数据用于复制功能
+            currentPlayerData = data;
+        }
+
+        // 调用真实API
+        async function callRealAPI(playerId) {
+            const timestamp = Math.floor(Date.now() / 1000).toString();
+            const params = {
+                id: playerId,
+                timestamp: timestamp,
+                key: CONFIG.API_KEY
+            };
+            
+            params.sign = generateSign(params, CONFIG.API_KEY);
+            
+            try {
+                const response = await fetch(CONFIG.API_ENDPOINT, {
+                    method: 'POST',
+                    headers: {
+                        'Content-Type': 'application/x-www-form-urlencoded',
+                        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+                        'Referer': 'http://xh.sycwy.cn/',
+                        'Origin': 'http://xh.sycwy.cn'
+                    },
+                    body: new URLSearchParams(params).toString()
+                });
+                
+                if (!response.ok) {
+                    throw new Error(`HTTP error! status: ${response.status}`);
+                }
+                
+                const result = await response.json();
+                console.log('🌐 原始API响应:', result);
+                
+                if (result.code === 200 && result.data) {
+                    // 返回未经修改的真实API数据
+                    console.log('✅ API数据获取成功，返回真实数据');
+                    return result.data;
+                } else {
+                    throw new Error(result.msg || '查询失败');
+                }
+            } catch (error) {
+                console.error('API调用失败:', error);
+                throw error;
+            }
+        }
+
+        // 计算皮肤总数
+        function calculateTotalSkins(data) {
+            // 从API的skin_style字段获取数据
+            let total = data.skin_style?.all || parseInt(data.skinNum) || 0;
+            let legendCount = data.skin_style?.chuanshuo || 0;
+            
+            console.log('皮肤统计:', {
+                total: total,
+                legendCount: legendCount,
+                skin_style: data.skin_style
+            });
+            
+            return { total, legendCount };
+        }
+
+        // 显示结果
+        function displayResults(data, playerId) {
+            currentPlayerData = data;
+            const { total, legendCount } = calculateTotalSkins(data);
+            
+            console.log('API返回的数据:', data);
+            console.log('皮肤总数:', total, '传说皮肤数:', legendCount);
+            
+            document.getElementById('playerIdDisplay').innerHTML = `
+                王者营地ID: ${playerId}<br>
+                皮肤总数: ${total}<br>
+                传说皮肤: ${legendCount}
+            `;
+            
+            generateSkinCategories(data);
+            document.getElementById('results').classList.add('show');
+            document.getElementById('copyBtn').style.display = 'inline-block';
+        }
+
+        // 查询玩家
+        async function searchPlayer() {
+            const playerId = document.getElementById('playerIdInput').value.trim();
+            if (!playerId) {
+                alert('请输入王者营地ID');
+                return;
+            }
+            
+            const searchBtn = document.getElementById('searchBtn');
+            const loading = document.getElementById('loading');
+            const results = document.getElementById('results');
+            
+            searchBtn.disabled = true;
+            loading.classList.add('show');
+            results.classList.remove('show');
+            
+            try {
+                const data = await callRealAPI(playerId);
+                displayResults(data, playerId);
+            } catch (error) {
+                alert('查询失败: ' + error.message);
+            } finally {
+                searchBtn.disabled = false;
+                loading.classList.remove('show');
+            }
+        }
+
+        // 复制文本到剪贴板
+        function copyToClipboard(text) {
+            navigator.clipboard.writeText(text).then(() => {
+                const copySuccess = document.getElementById('copySuccess');
+                copySuccess.textContent = `已复制: ${text}`;
+                copySuccess.classList.add('show');
+                setTimeout(() => {
+                    copySuccess.classList.remove('show');
+                }, 2000);
+            }).catch(err => {
+                console.error('复制失败:', err);
+                // 降级处理：创建临时input元素
+                const tempInput = document.createElement('input');
+                tempInput.value = text;
+                document.body.appendChild(tempInput);
+                tempInput.select();
+                document.execCommand('copy');
+                document.body.removeChild(tempInput);
+                
+                const copySuccess = document.getElementById('copySuccess');
+                copySuccess.textContent = `已复制: ${text}`;
+                copySuccess.classList.add('show');
+                setTimeout(() => {
+                    copySuccess.classList.remove('show');
+                }, 2000);
+            });
+        }
+
+        // 生成复制文本
+        function generateCopyText() {
+            if (!currentPlayerData) return '';
+            
+            const copyTexts = [];
+            
+            SKIN_CATEGORIES.forEach(category => {
+                let skins = [];
+                
+                if (currentPlayerData[category.key] && typeof currentPlayerData[category.key] === 'string') {
+                    skins = currentPlayerData[category.key].split(',').map(s => s.trim()).filter(Boolean);
+                }
+                
+                if (skins.length > 0) {
+                    copyTexts.push(skins.join(','));
+                }
+            });
+            
+            return copyTexts.join(',');
+        }
+
+        // 复制结果
+        function copyResults() {
+            const text = generateCopyText();
+            if (!text) {
+                alert('没有可复制的内容');
+                return;
+            }
+            
+            navigator.clipboard.writeText(text).then(() => {
+                const copySuccess = document.getElementById('copySuccess');
+                copySuccess.classList.add('show');
+                setTimeout(() => {
+                    copySuccess.classList.remove('show');
+                }, 2000);
+            }).catch(err => {
+                alert('复制失败，请手动复制');
+                console.error('复制失败:', err);
+            });
+        }
+
+        // 初始化
+        function initializePage() {
+            document.getElementById('searchBtn').addEventListener('click', searchPlayer);
+            document.getElementById('copyBtn').addEventListener('click', copyResults);
+            
+            document.getElementById('playerIdInput').addEventListener('keypress', (e) => {
+                if (e.key === 'Enter') {
+                    searchPlayer();
+                }
+            });
+            
+            console.log('王者荣耀皮肤查询器已加载完成！');
+        }
+
+        // 页面加载完成后初始化
+        document.addEventListener('DOMContentLoaded', initializePage);
+    </script>
+</body>
+</html>
